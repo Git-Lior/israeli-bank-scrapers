@@ -180,6 +180,17 @@ async function getAccountBalance(apiSiteUrl: string, page: Page, accountNumber: 
   return balanceAndCreditLimit?.currentBalance;
 }
 
+async function liorGetCurrentInvestmentsInfo(apiSiteUrl: string, page: Page, accountNumber: string) {
+  const month = moment().format('YYYYMM');
+  const investmentsInfoUrl = `${apiSiteUrl}/ServerServices/general/home-page/composite/overview?startMonth=${month}&endMonth=${month}&accountId=${accountNumber}&lang=he`;
+  const investmentsInfo = await fetchGetWithinPage<any>(page, investmentsInfoUrl);
+
+  return investmentsInfo?.homePageMyAccountTitleList.reduce((pv: any, v: any) => ({
+    ...pv,
+    [v.source]: v.balance,
+  }), {});
+}
+
 async function fetchAccountData(page: Page, baseUrl: string, options: ScraperOptions) {
   const restContext = await getRestContext(page);
   const apiSiteUrl = `${baseUrl}/${restContext}`;
@@ -210,6 +221,11 @@ async function fetchAccountData(page: Page, baseUrl: string, options: ScraperOpt
       debug('Skipping balance for a closed account, balance will be undefined');
     }
 
+    let liorInvestmentsInfo: any;
+    if (options.liorGetInvestmentsInfo) {
+      liorInvestmentsInfo = liorGetCurrentInvestmentsInfo(baseUrl, page, accountNumber);
+    }
+
     const txns = await getAccountTransactions(
       baseUrl,
       apiSiteUrl,
@@ -223,6 +239,7 @@ async function fetchAccountData(page: Page, baseUrl: string, options: ScraperOpt
     accounts.push({
       accountNumber,
       balance,
+      liorInvestmentsInfo,
       txns,
     });
   }

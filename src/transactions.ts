@@ -3,6 +3,7 @@ export interface TransactionsAccount {
   accountNumber: string;
   balance?: number;
   txns: Transaction[];
+  liorInvestmentsInfo?: any;
 }
 
 export enum TransactionTypes {
